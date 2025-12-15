@@ -36,7 +36,7 @@
   z-index: 2;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 140px 20px 64px;
+  padding: 60px 20px 64px;
 }
 
 .content-blur {
@@ -153,20 +153,22 @@
 }
 
 .solana-logo {
-  position: fixed;
-  top: 16px;
+  position: sticky;
+  top: 12px;
   left: 16px;
   z-index: 5;
+  display: inline-flex;
+  align-items: center;
   background: rgba(3, 4, 10, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 14px;
-  padding: 8px 10px;
+  padding: 6px 8px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(10px);
 }
 
 .solana-logo img {
-  height: 28px;
+  height: 24px;
   width: auto;
   display: block;
 }
@@ -220,9 +222,35 @@
   text-shadow: 0 12px 40px rgba(255, 95, 109, 0.25);
 }
 
+.count-label-inline {
+  font-size: 16px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
 .count-label {
   font-size: 16px;
+  font-weight: 600;
   opacity: 0.85;
+}
+
+.tiny-metric {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f7f9ff;
+  white-space: nowrap;
+}
+
+.tiny-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 11px;
+  color: #b8c4dd;
 }
 
 .status {
@@ -391,21 +419,6 @@ button:disabled {
   margin: 4px 0 0;
 }
 
-.tiny-metric {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-end;
-  padding: 8px 10px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.tiny-label {
-  font-size: 12px;
-  color: #9fb1d7;
-}
-
 .reasons {
   list-style: none;
   padding: 0;
@@ -503,7 +516,7 @@ button:disabled {
 
 @media (max-width: 640px) {
   .content {
-    padding: 120px 16px 48px;
+    padding: 80px 16px 48px;
   }
 
   .headlines h1 {
@@ -512,6 +525,17 @@ button:disabled {
 
   .counter {
     justify-content: space-between;
+    gap: 10px;
+  }
+
+  .solana-logo {
+    top: 10px;
+    left: 10px;
+    padding: 5px 7px;
+  }
+
+  .solana-logo img {
+    height: 20px;
   }
 
   .cta-meta {

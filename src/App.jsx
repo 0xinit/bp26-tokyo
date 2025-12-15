@@ -258,7 +258,7 @@ function App({ appId }) {
           <div className="intro-card">
             <span className="pill">Tokyo takeover</span>
             <h2>Loading the psyop</h2>
-            <p>Quick flash of Tokyo + the tweet before you sign.</p>
+            <p>Mert said that Solana community is powerful and has the power to change the location of Breakpoint 2026, so here we are. Sign the petition if you want BP2026 in Japan.  </p>
             <div className="intro-actions">
               <button className="primary" onClick={handleDismissIntro}>
                 Enter petition
@@ -295,7 +295,7 @@ function App({ appId }) {
             </h1>
             <p className="lede">
               Sign to prove you are Solana-aligned or verified on Twitter. Every signature is
-              a vote to bring BreakPoint 2026 to the city that never sleeps on-chain.
+              a vote to bring BreakPoint 2026 to the city of culture and anime
             </p>
             <div className="chips">
               <span className="chip">Privy auth — Twitter & wallets</span>
@@ -334,7 +334,7 @@ function App({ appId }) {
                 <h2>Builders, validators, and fans are here.</h2>
               </div>
               <div className="tiny-metric">
-                <span className="tiny-label">Signed</span>
+                <span className="tiny-label">Total Signed: </span>
                 <strong>{signerCount}</strong>
               </div>
             </div>
