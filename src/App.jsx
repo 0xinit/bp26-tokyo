@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLogin, useLogout, usePrivy } from '@privy-io/react-auth'
+import { createClient } from '@supabase/supabase-js'
 import './App.css'
 
 const STORAGE_KEY = 'tokyo-petition-signatures'
@@ -89,6 +90,14 @@ function App({ appId }) {
   })
   const { logout } = useLogout()
 
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+  const supabase = useMemo(() => {
+    if (!supabaseUrl || !supabaseKey) return null
+    return createClient(supabaseUrl, supabaseKey)
+  }, [supabaseUrl, supabaseKey])
+  const remoteEnabled = Boolean(supabase)
+
   const [signatures, setSignatures] = useState(() => {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
@@ -102,6 +111,7 @@ function App({ appId }) {
   })
   const [flash, setFlash] = useState('')
   const [showIntro, setShowIntro] = useState(true)
+  const [loadingRemote, setLoadingRemote] = useState(remoteEnabled)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(signatures))
@@ -115,9 +125,46 @@ function App({ appId }) {
 
   useEffect(() => {
     if (!showIntro) return
-    const timer = setTimeout(() => handleDismissIntro(), 12000)
+    const timer = setTimeout(() => handleDismissIntro(), 7000)
     return () => clearTimeout(timer)
   }, [showIntro])
+
+  useEffect(() => {
+    if (!supabase) {
+      setLoadingRemote(false)
+      return
+    }
+    let cancelled = false
+    const load = async () => {
+      setLoadingRemote(true)
+      const { data, error } = await supabase
+        .from('signatures')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(120)
+      if (cancelled) return
+      if (error) {
+        console.error('Supabase load error', error)
+        setFlash('Failed to load remote signatures')
+        setLoadingRemote(false)
+        return
+      }
+      setSignatures(
+        data.map((row) => ({
+          id: row.id,
+          userId: row.user_id || row.userId,
+          name: row.name,
+          proof: row.proof,
+          timestamp: row.timestamp,
+        })),
+      )
+      setLoadingRemote(false)
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [supabase])
 
   const alreadySigned = useMemo(() => {
     if (!user) return false
@@ -128,7 +175,7 @@ function App({ appId }) {
     setShowIntro(false)
   }
 
-  const handleSign = () => {
+  const handleSign = async () => {
     if (!appId) {
       setFlash('Set VITE_PRIVY_APP_ID to enable Privy login')
       return
@@ -149,8 +196,25 @@ function App({ appId }) {
       return
     }
     const entry = buildSignatureFromUser(user)
-    setSignatures((prev) => [entry, ...prev])
-    setFlash('You just added your voice for Tokyo')
+    if (supabase) {
+      const { error } = await supabase.from('signatures').insert({
+        id: entry.id,
+        user_id: entry.userId,
+        name: entry.name,
+        proof: entry.proof,
+        timestamp: entry.timestamp,
+      })
+      if (error) {
+        console.error('Supabase insert error', error)
+        setFlash('Could not save to the shared petition')
+        return
+      }
+      setSignatures((prev) => [entry, ...prev])
+      setFlash('Saved to the shared petition — arigatou!')
+    } else {
+      setSignatures((prev) => [entry, ...prev])
+      setFlash('Saved locally. Add Supabase to share it.')
+    }
   }
 
   const signerCount = signatures.length
@@ -194,7 +258,7 @@ function App({ appId }) {
           <div className="intro-card">
             <span className="pill">Tokyo takeover</span>
             <h2>Loading the psyop</h2>
-            <p>Mert said that Solana community is powerful and has the power to change the location of Breakpoint 2026, so here we are. Sign the petition if you want BP2026 in Japan.</p>
+            <p>Quick flash of Tokyo + the tweet before you sign.</p>
             <div className="intro-actions">
               <button className="primary" onClick={handleDismissIntro}>
                 Enter petition
@@ -231,12 +295,14 @@ function App({ appId }) {
             </h1>
             <p className="lede">
               Sign to prove you are Solana-aligned or verified on Twitter. Every signature is
-              a vote to bring BreakPoint 2026 to the city of culture and anime.
+              a vote to bring BreakPoint 2026 to the city that never sleeps on-chain.
             </p>
             <div className="chips">
               <span className="chip">Privy auth — Twitter & wallets</span>
               <span className="chip">Activity feed live</span>
-              <span className="chip">Community-led petition</span>
+              <span className="chip">
+                {remoteEnabled ? 'Shared Supabase store' : 'Local demo storage'}
+              </span>
             </div>
           </div>
           <div className="cta">
@@ -256,6 +322,7 @@ function App({ appId }) {
               )}
             </div>
             {flash && <div className="flash">{flash}</div>}
+            {loadingRemote && remoteEnabled && <div className="flash">Syncing shared feed…</div>}
           </div>
         </div>
 

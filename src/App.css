@@ -36,7 +36,7 @@
   z-index: 2;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 88px 20px 64px;
+  padding: 140px 20px 64px;
 }
 
 .content-blur {
@@ -74,14 +74,14 @@
 
 .intro-frame-1 {
   object-fit: cover;
-  animation: introFrame1 16s ease-in-out infinite;
+  animation: introFrame1 7s ease-in-out infinite;
 }
 
 .intro-frame-2 {
   object-fit: contain;
   padding: 6vh 6vw;
   background: rgba(0, 0, 0, 0.45);
-  animation: introFrame2 16s ease-in-out infinite;
+  animation: introFrame2 7s ease-in-out infinite;
 }
 
 @keyframes introFrame1 {
@@ -89,13 +89,13 @@
     opacity: 0;
     transform: scale(1.02);
   }
-  10% {
+  8% {
     opacity: 1;
   }
-  30% {
+  18% {
     opacity: 1;
   }
-  35% {
+  22% {
     opacity: 0;
   }
   100% {
@@ -109,14 +109,14 @@
     opacity: 0;
     transform: scale(0.96);
   }
-  30% {
+  20% {
     opacity: 0;
   }
-  40% {
+  28% {
     opacity: 1;
     transform: scale(1);
   }
-  98% {
+  95% {
     opacity: 1;
   }
   100% {
@@ -503,7 +503,7 @@ button:disabled {
 
 @media (max-width: 640px) {
   .content {
-    padding: 24px 16px 48px;
+    padding: 120px 16px 48px;
   }
 
   .headlines h1 {
