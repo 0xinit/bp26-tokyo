@@ -74,3 +74,247 @@ const buildSignatureFromUser = (user) => {
   }
 }
 
+function App({ appId }) {
+  const { ready, authenticated, user } = usePrivy()
+  const { login } = useLogin({
+    onComplete: () => setFlash('Verified with Privy. Sign it!'),
+    onError: (error) => {
+      const message =
+        error?.message?.toLowerCase().includes('twitter')
+          ? 'Twitter login is disabled for this Privy app. Enable Twitter in the Privy dashboard.'
+          : 'Login failed. Check Privy dashboard settings.'
+      setFlash(message)
+      console.error('Privy login error', error)
+    },
+  })
+  const { logout } = useLogout()
+
+  const [signatures, setSignatures] = useState(() => {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      try {
+        return JSON.parse(stored)
+      } catch (error) {
+        console.warn('Failed to parse stored signatures', error)
+      }
+    }
+    return seedSignatures
+  })
+  const [flash, setFlash] = useState('')
+  const [showIntro, setShowIntro] = useState(true)
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(signatures))
+  }, [signatures])
+
+  useEffect(() => {
+    if (!flash) return
+    const timer = setTimeout(() => setFlash(''), 3500)
+    return () => clearTimeout(timer)
+  }, [flash])
+
+  useEffect(() => {
+    if (!showIntro) return
+    const timer = setTimeout(() => handleDismissIntro(), 12000)
+    return () => clearTimeout(timer)
+  }, [showIntro])
+
+  const alreadySigned = useMemo(() => {
+    if (!user) return false
+    return signatures.some((entry) => entry.userId && entry.userId === user.id)
+  }, [signatures, user])
+
+  const handleDismissIntro = () => {
+    setShowIntro(false)
+  }
+
+  const handleSign = () => {
+    if (!appId) {
+      setFlash('Set VITE_PRIVY_APP_ID to enable Privy login')
+      return
+    }
+    if (!ready) {
+      setFlash('Booting Privy…')
+      return
+    }
+    if (!authenticated) {
+      login({
+        loginMethods: ['wallet', 'twitter'],
+        embeddedWallets: { createOnLogin: 'users-without-wallets' },
+      })
+      return
+    }
+    if (alreadySigned) {
+      setFlash('You already signed this — arigatou!')
+      return
+    }
+    const entry = buildSignatureFromUser(user)
+    setSignatures((prev) => [entry, ...prev])
+    setFlash('You just added your voice for Tokyo')
+  }
+
+  const signerCount = signatures.length
+  const latestActivity = signatures.slice(0, 8)
+  const statusText = !appId
+    ? 'Add VITE_PRIVY_APP_ID to enable auth'
+    : !ready
+      ? 'Connecting to Privy…'
+      : authenticated
+        ? 'Verified via Privy'
+        : 'Sign in with Twitter or a Solana wallet'
+
+  const userProof = (() => {
+    const wallet = user?.wallets?.[0] || user?.wallet
+    if (user?.twitter?.username) return `@${user.twitter.username}`
+    if (wallet?.address) return shortenAddress(wallet.address)
+    return 'Not connected'
+  })()
+
+  return (
+    <div className="page">
+      <div className="bg" />
+      <div className="grain" />
+      <div className="solana-logo">
+        <img src="/solanaLogo.svg" alt="Solana logo" />
+      </div>
+
+      {showIntro && (
+        <div className="intro-overlay">
+          <div className="intro-images">
+            <img src="/tokyo.jpg" alt="Tokyo skyline" className="intro-frame intro-frame-1" />
+            <img
+              src="/tweet-splash.jpg"
+              alt="BreakPoint tweet screenshot"
+              className="intro-frame intro-frame-2"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none'
+              }}
+            />
+          </div>
+          <div className="intro-card">
+            <span className="pill">Tokyo takeover</span>
+            <h2>Loading the psyop</h2>
+            <p>Mert said that Solana community is powerful and has the power to change the location of Breakpoint 2026, so here we are. Sign the petition if you want BP2026 in Japan.</p>
+            <div className="intro-actions">
+              <button className="primary" onClick={handleDismissIntro}>
+                Enter petition
+              </button>
+              <button className="ghost" onClick={handleDismissIntro}>
+                Skip intro
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className={`content ${showIntro ? 'content-blur' : ''}`}>
+        <header className="top">
+          <div className="brand">
+            <span className="pill">BreakPoint 2026</span>
+            <p className="eyebrow">London? いいえ. We want Tokyo.</p>
+          </div>
+          <div className="counter">
+            <span className="count">{signerCount}</span>
+            <span className="count-label">voices for Tokyo</span>
+          </div>
+          <div className="status">
+            <span className="dot" />
+            {statusText}
+          </div>
+        </header>
+
+        <div className="hero">
+          <div className="headlines">
+            <h1>
+              Move BreakPoint
+              <span>to Tokyo</span>
+            </h1>
+            <p className="lede">
+              Sign to prove you are Solana-aligned or verified on Twitter. Every signature is
+              a vote to bring BreakPoint 2026 to the city of culture and anime.
+            </p>
+            <div className="chips">
+              <span className="chip">Privy auth — Twitter & wallets</span>
+              <span className="chip">Activity feed live</span>
+              <span className="chip">Community-led petition</span>
+            </div>
+          </div>
+          <div className="cta">
+            <button className="primary" onClick={handleSign}>
+              {authenticated ? 'Sign for Tokyo' : 'Verify & Sign'}
+            </button>
+            <div className="cta-meta">
+              <p>
+                {authenticated
+                  ? `You’re connected as ${userProof}.`
+                  : 'Prove yourself with Privy: Twitter or a Solana-compatible wallet.'}
+              </p>
+              {authenticated && (
+                <button className="ghost" onClick={logout}>
+                  Disconnect
+                </button>
+              )}
+            </div>
+            {flash && <div className="flash">{flash}</div>}
+          </div>
+        </div>
+
+        <div className="grid">
+          <section className="card petition">
+            <div className="section-head">
+              <div>
+                <p className="eyebrow">Why Tokyo?</p>
+                <h2>Builders, validators, and fans are here.</h2>
+              </div>
+              <div className="tiny-metric">
+                <span className="tiny-label">Signed</span>
+                <strong>{signerCount}</strong>
+              </div>
+            </div>
+            <ul className="reasons">
+              <li>Asia-Pacific time zones bring new speakers & new users.</li>
+              <li>Huge Solana hacker ecosystem already shipping weekly.</li>
+              <li>Direct flights, ramen, and a skyline worthy of BreakPoint.</li>
+            </ul>
+            <div className="verification">
+              <div>
+                <p className="eyebrow">Proof stack</p>
+                <h3>Twitter handles or Solana wallets via Privy</h3>
+                <p className="body">
+                  We use Privy to make sure each signer is a real supporter. Connect a Solana
+                  wallet or your Twitter account — once verified, your name lights up the
+                  activity feed.
+                </p>
+              </div>
+              <button className="secondary" onClick={handleSign}>
+                Add my name
+              </button>
+            </div>
+          </section>
+
+          <aside className="card activity">
+            <div className="section-head">
+              <p className="eyebrow">Live activity</p>
+              <h3>Latest petitions</h3>
+            </div>
+            <ul className="activity-list">
+              {latestActivity.map((entry) => (
+                <li key={entry.id} className="activity-item">
+                  <div className="avatar">{entry.name.slice(0, 1)}</div>
+                  <div>
+                    <p className="name">{entry.name}</p>
+                    <p className="meta">
+                      {entry.proof} • {formatAgo(entry.timestamp)}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default App
